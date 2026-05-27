@@ -3,39 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stroop Task - jsPsych</title>
-    
-    <!-- jsPsych v7.3系の本体とCSS -->
+    <title>ストループ課題 - Stroop Task</title>
+    <!-- jsPsych 核心ライブラリとスタイルシート -->
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
     <!-- 使用するプラグイン -->
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
 
     <style>
         body {
-            background-color: #FFFFFF; /* 背景色: 白 */
-            color: #333333;
-            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; /* 指定フォント */
+            background-color: #FFFFFF;
+            color: #333;
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
             margin: 0;
             padding: 0;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
         }
 
-        /* 教示テキストのサイズ */
-        .instruction-text {
-            font-size: 24px;
-            line-height: 1.6;
-        }
-
-        /* 刺激（文字）のサイズ */
-        .stimulus-text {
+        /* 刺激の文字サイズ */
+        .stroop-stimulus {
             font-size: 60px;
             font-weight: bold;
         }
 
-        /* jsPsychのコンテナ調整 */
-        .jspsych-content {
+        /* 教示画面・フォーム画面のレイアウト */
+        .instructions, .custom-survey-container {
+            font-size: 24px;
+            line-height: 1.8;
+            text-align: left;
             max-width: 800px;
+            padding: 20px;
+        }
+
+        kbd {
+            background-color: #eee;
+            border-radius: 3px;
+            border: 1px solid #b4b4b4;
+            box-shadow: 0 1px 1px rgba(0,0,0,.2);
+            color: #333;
+            display: inline-block;
+            font-size: .85em;
+            font-weight: 700;
+            line-height: 1;
+            padding: 2px 4px;
+            white-space: nowrap;
+        }
+
+        /* 注視点 */
+        .fixation {
+            font-size: 60px;
+        }
+
+        /* メッセージ表示用のスタイル */
+        .message-box {
+            font-size: 24px;
+            text-align: center;
+            line-height: 2;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #333;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -44,105 +88,211 @@
 
     <script>
         const jsPsych = initJsPsych({
+            display_element: 'jspsych-target',
             on_finish: function() {
-                jsPsych.data.displayData('csv');
+                // 送信処理中のローディング画面を表示
+                const displayElement = jsPsych.getDisplayElement();
+                displayElement.innerHTML = `
+                    <div class="message-box">
+                        <div class="spinner"></div>
+                        <p>データを送信しています。少々お待ちください...</p>
+                    </div>
+                `;
+
+                // 不要な試行データを除外して整形
+                const rawData = jsPsych.data.get().filter({ task: 'response' }).values();
+                
+                // 抽出対象列
+                const headers = ["subject_id", "timestamp", "word", "color", "condition", "rt", "correct"];
+                
+                // CSVデータの作成
+                let csvRows = [headers.join(",")];
+                
+                rawData.forEach(function(row) {
+                    const rowValues = [
+                        row.subject_id,
+                        row.timestamp,
+                        row.word,
+                        row.color,
+                        row.condition,
+                        row.rt,
+                        row.correct // "true" または "false"
+                    ];
+                    // カンマやダブルクォーテーションのエスケープ処理
+                    const formattedRow = rowValues.map(value => {
+                        let str = String(value === undefined || value === null ? '' : value);
+                        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                            str = '"' + str.replace(/"/g, '""') + '"';
+                        }
+                        return str;
+                    });
+                    csvRows.push(formattedRow.join(","));
+                });
+
+                const formattedCsvData = csvRows.join("\n");
+                const targetUrl = 'https://script.google.com/macros/s/AKfycbwF1YVJXqWEt_O2jF-G70Z5MCD_X92V3V5kSqOoT4lVWPjoXFz-mketHg6mBTDdEJb6/exec';
+
+                // 指数バックオフを用いたデータ送信関数
+                function sendDataWithBackoff(url, data, retries = 5, delay = 1000) {
+                    return fetch(url, {
+                        method: 'POST',
+                        mode: 'no-cors', // クロスオリジン対策
+                        headers: {
+                            'Content-Type': 'text/plain'
+                        },
+                        body: data
+                    })
+                    .then(response => {
+                        // mode: 'no-cors' のためレスポンスステータスは0（opaque）となる可能性がありますが、
+                        // ネットワークエラーがなくキャッチに移行しなければ成功と見なします。
+                        displayElement.innerHTML = `
+                            <div class="message-box">
+                                <p style="color: green; font-weight: bold; font-size: 28px;">✓ 送信完了</p>
+                                <p>実験データが正常に送信されました。</p>
+                                <p>ご協力ありがとうございました。ブラウザを閉じてください。</p>
+                            </div>
+                        `;
+                    })
+                    .catch(error => {
+                        if (retries > 0) {
+                            console.warn(`送信エラー。リトライします... 残り回数: ${retries} (待機時間: ${delay}ms)`);
+                            setTimeout(() => {
+                                sendDataWithBackoff(url, data, retries - 1, delay * 2);
+                            }, delay);
+                        } else {
+                            console.error('送信失敗:', error);
+                            displayElement.innerHTML = `
+                                <div class="message-box">
+                                    <p style="color: red; font-weight: bold; font-size: 28px;">⚠ 送信エラー</p>
+                                    <p>データの自動送信に失敗しました。</p>
+                                    <p>恐れ入りますが、以下のデータをコピーして実験担当者にお送りください。</p>
+                                    <textarea readonly style="width:100%; height:150px; margin-top:10px;">${formattedCsvData}</textarea>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+
+                // 送信実行
+                sendDataWithBackoff(targetUrl, formattedCsvData);
             }
         });
 
-        // 要因計画: 3(文字) x 3(色) = 9パターン
-        const words = [
-            { text: "赤", color_name: "red", response: "r" },
-            { text: "青", color_name: "blue", response: "b" },
-            { text: "緑", color_name: "green", response: "g" }
+        // 刺激（文字と色の組み合わせ）の定義
+        const stimuli_pool = [
+            // 一致条件 (Congruent)
+            { word: "赤", color: "red", condition: "congruent", correct_response: "r" },
+            { word: "青", color: "blue", condition: "congruent", correct_response: "b" },
+            { word: "緑", color: "green", condition: "congruent", correct_response: "g" },
+            // 不一致条件 (Incongruent)
+            { word: "赤", color: "blue", condition: "incongruent", correct_response: "b" },
+            { word: "赤", color: "green", condition: "incongruent", correct_response: "g" },
+            { word: "青", color: "red", condition: "incongruent", correct_response: "r" },
+            { word: "青", color: "green", condition: "incongruent", correct_response: "g" },
+            { word: "緑", color: "red", condition: "incongruent", correct_response: "r" },
+            { word: "緑", color: "blue", condition: "incongruent", correct_response: "b" }
         ];
 
-        const colors = [
-            { name: "red", hex: "#FF0000" },
-            { name: "blue", hex: "#0000FF" },
-            { name: "green", hex: "#008000" }
-        ];
+        // 10試行分をランダムにサンプリング（復元抽出）
+        const test_stimuli = jsPsych.randomization.sampleWithReplacement(stimuli_pool, 10);
 
-        let stimuli = [];
-        words.forEach(w => {
-            colors.forEach(c => {
-                // 仕様書に基づき、文字の「色」に対応するキーを正解に設定
-                const targetColorData = words.find(wordItem => wordItem.color_name === c.name);
-                
-                stimuli.push({
-                    word: w.text,
-                    color_hex: c.hex,
-                    color_label: c.name,
-                    correct_response: targetColorData.response, // 文字の色に対する反応キー
-                    condition: (w.color_name === c.name) ? "congruent" : "incongruent"
-                });
-            });
-        });
+        // タイムラインの初期化
+        let timeline = [];
 
-        // 合計10試行をランダムに抽出（復元抽出）
-        const test_stimuli = jsPsych.randomization.sampleWithReplacement(stimuli, 10);
-
-        const timeline = [];
-
-        // 1. 教示画面 (ここから開始)
-        timeline.push({
-            type: jsPsychHtmlKeyboardResponse,
-            stimulus: `
-                <div class="instruction-text">
-                    <p>文字の<strong>「色」</strong>をキーボードで答えてください。</p>
-                    <p>赤色の文字なら <strong>'r'</strong></p>
-                    <p>青色の文字なら <strong>'b'</strong></p>
-                    <p>緑色の文字なら <strong>'g'</strong></p>
-                    <br>
-                    <p>準備ができたら<strong>スペースキー</strong>を押して開始します。</p>
-                </div>
-            `,
-            choices: [' ']
-        });
-
-        // 各試行の定義
-        const test_procedure = {
-            timeline: [
-                // a. 注視点 (+)
+        // (1) 参加者ID入力画面 (survey-textプラグイン)
+        const participant_info = {
+            type: jsPsychSurveyText,
+            questions: [
                 {
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: '<div style="font-size: 60px;">+</div>',
-                    choices: "NO_KEYS",
-                    trial_duration: 500,
-                    data: { task: 'fixation' }
-                },
-                // b. 刺激提示
-                {
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: function() {
-                        const s = jsPsych.timelineVariable('color_hex');
-                        const t = jsPsych.timelineVariable('word');
-                        return `<div class="stimulus-text" style="color: ${s};">${t}</div>`;
-                    },
-                    choices: ['r', 'b', 'g'],
-                    data: {
-                        task: 'response',
-                        correct_response: jsPsych.timelineVariable('correct_response'),
-                        condition: jsPsych.timelineVariable('condition')
-                    },
-                    on_finish: function(data) {
-                        // 正誤判定の追加
-                        data.correct = (data.response === data.correct_response);
-                    }
-                },
-                // c. 試行間隔 (ITI)
-                {
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: '',
-                    choices: "NO_KEYS",
-                    trial_duration: 1000,
-                    data: { task: 'iti' }
+                    prompt: '<p class="custom-survey-container"><strong>参加者ID</strong>（例：学籍番号）を入力してください。</p>', 
+                    required: true,
+                    name: 'participant_id'
                 }
             ],
-            timeline_variables: test_stimuli
+            button_label: '次へ',
+            on_finish: function(data) {
+                // 入力されたIDを取得
+                const id_entered = data.response.participant_id;
+                // 全てのデータに自動的に付与
+                jsPsych.data.addProperties({
+                    subject_id: id_entered,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        };
+        timeline.push(participant_info);
+
+        // (2) 教示画面
+        const instructions = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <div class="instructions">
+                    <p>文字の<strong>「色」</strong>をできるだけ早く正確に答えてください。</p>
+                    <p>意味（漢字）ではなく、見えている<strong>色</strong>に反応してください。</p>
+                    <ul>
+                        <li><span style="color:red">■</span> 赤色の文字なら <kbd>r</kbd> キー</li>
+                        <li><span style="color:blue">■</span> 青色の文字なら <kbd>b</kbd> キー</li>
+                        <li><span style="color:green">■</span> 緑色の文字なら <kbd>g</kbd> キー</li>
+                    </ul>
+                    <p style="text-align:center; margin-top:40px;">スペースキーを押すと開始します。</p>
+                </div>
+            `,
+            choices: [' '],
+            post_trial_gap: 1000
+        };
+        timeline.push(instructions);
+
+        // (3) 試行の構成要素
+
+        // a. 注視点 (+)
+        const fixation = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: '<div class="fixation">+</div>',
+            choices: "NO_KEYS",
+            trial_duration: 500,
+            data: { task: 'fixation' }
         };
 
+        // b. 刺激提示
+        const test = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function() {
+                const word = jsPsych.timelineVariable('word');
+                const color = jsPsych.timelineVariable('color');
+                return `<div class="stroop-stimulus" style="color: ${color};">${word}</div>`;
+            },
+            choices: ['r', 'g', 'b'],
+            data: {
+                task: 'response',
+                word: jsPsych.timelineVariable('word'),
+                color: jsPsych.timelineVariable('color'),
+                condition: jsPsych.timelineVariable('condition'),
+                correct_response: jsPsych.timelineVariable('correct_response')
+            },
+            on_finish: function(data) {
+                // 正誤判定を文字列 'true' または 'false' として記録
+                const is_correct = (data.response == data.correct_response);
+                data.correct = is_correct ? "true" : "false";
+            }
+        };
+
+        // c. 試行間隔 (ITI)
+        const iti = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: '',
+            choices: "NO_KEYS",
+            trial_duration: 1000
+        };
+
+
+        // メイン試行ループの定義
+        const test_procedure = {
+            timeline: [fixation, test, iti],
+            timeline_variables: test_stimuli
+        };
         timeline.push(test_procedure);
 
+        // 実験の実行
         jsPsych.run(timeline);
 
     </script>
