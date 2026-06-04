@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ストループ課題 (Stroop Task) - 配置修正版</title>
+  
+  <!-- jsPsych 7.3.3 のCSSとコアライブラリの読み込み -->
+  <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css" />
+  <script src="https://unpkg.com/jspsych@7.3.3"></script>
+  
+  <!-- jsPsych プラグインの読み込み -->
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.2.1"></script>
+
+  <style>
+    /* 画面デザインのカスタマイズ（実験仕様書に基づく） */
+    body {
+      background-color: #FFFFFF; /* 背景色: 白 */
+      color: #000000;
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; /* 指定フォント */
+      /* 【配置修正】ボディ自体の余白を排除 */
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* スクロール防止 */
+    }
+
+    /* 【配置修正】jsPsychのターゲットコンテナを画面全体に広げ、中央揃えにする */
+    #jspsych-target {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center; /* 水平中央 */
+      align-items: center;    /* 垂直中央 */
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 【配置修正】jsPsychの内部スタイルを上書きして中央配置を確実にする */
+    .jspsych-content-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .jspsych-content {
+      /* デフォルトのマージンをリセットし、Flexで中央に配置 */
+      margin: 0 !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* 【配置修正】刺激提示用のスタイル（60px） */
+    .stroop-stimulus {
+      font-size: 60px;
+      font-weight: bold;
+      user-select: none;
+      /* 文字自体にマージンを持たせず、親の中央に配置 */
+      margin: 0;
+      padding: 0;
+      line-height: 1; /* 行間を詰め、見切れを防ぐ */
+    }
+
+    /* 教示・テキスト画面用のスタイル（24px） */
+    .instruction-text {
+      font-size: 24px;
+      line-height: 1.6;
+      text-align: left;
+      display: inline-block;
+      max-width: 800px;
+      /* 教示画面では中央揃えにするためのFlex調整 */
+      align-self: center;
+    }
+
+    /* 注視点のスタイル */
+    .fixation-mark {
+      font-size: 60px;
+      font-weight: normal;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- 【配置修正】このdivが画面中央の親となります -->
+  <div id="jspsych-target"></div>
+
+  <script>
+    // Canvasなどのiframe環境でPermissions PolicyによりフルスクリーンAPIが制限されている場合のエラーを回避する対策
+    if (window.self !== window.top) {
+      Element.prototype.requestFullscreen = function() {
+        console.warn("Fullscreen request was bypassed automatically due to iframe permissions policy restriction.");
+        return Promise.resolve();
+      };
+      if (document.exitFullscreen) {
+        document.exitFullscreen = function() {
+          return Promise.resolve();
+        };
+      }
+    }
+
+    // 1. jsPsych の初期化
+    const jsPsych = initJsPsych({
+      display_element: 'jspsych-target', // 指定したdivに展開
+      // 実験終了時にCSV形式のデータを画面に表示
+      on_finish: function() {
+        jsPsych.data.displayData('csv');
+      }
+    });
+
+    // タイムライン（実験の流れ）を格納する配列
+    const timeline = [];
+
+    // 2. 全画面化の試行
+    const fullscreen_trial = {
+      type: jsPsychFullscreen,
+      fullscreen_mode: true,
+      button_label: '全画面表示を開始する'
+    };
+    timeline.push(fullscreen_trial);
+
+    // 3. 教示画面
+    const instructions = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <div class="instruction-text">
+          <p>これからストループ課題を始めます。</p>
+          <p>画面中央に色がついた「文字」が表示されます。<br>
+          文字の意味に惑わされず、<strong>文字の「色」</strong>をキーボードで答えてください。</p>
+          <p style="padding-left: 20px; border-left: 4px solid #333; margin: 20px 0;">
+            <span style="color: red;">赤色</span> の文字なら <strong>'r'</strong> キー<br>
+            <span style="color: blue;">青色</span> の文字なら <strong>'b'</strong> キー<br>
+            <span style="color: green;">緑色</span> の文字なら <strong>'g'</strong> キー
+          </p>
+          <p style="text-align: center; margin-top: 40px; font-weight: bold;">
+            準備ができたら【スペースキー】を押して開始します。
+          </p>
+        </div>
+      `,
+      choices: [' '], // スペースキーのみ受け付ける
+    };
+    timeline.push(instructions);
+
+    // 4. 刺激 (Stimuli) - 要因計画
+    const stimuli_factors = [
+      // 一致条件 (Congruent)
+      { word: "赤", color: "red", key: "r", congruency: "congruent" },
+      { word: "青", color: "blue", key: "b", congruency: "congruent" },
+      { word: "緑", color: "green", key: "g", congruency: "congruent" },
+      
+      // 不一致条件 (Incongruent)
+      { word: "赤", color: "blue", key: "b", congruency: "incongruent" },
+      { word: "赤", color: "green", key: "g", congruency: "incongruent" },
+      { word: "青", color: "red", key: "r", congruency: "incongruent" },
+      { word: "青", color: "green", key: "g", congruency: "incongruent" },
+      { word: "緑", color: "red", key: "r", congruency: "incongruent" },
+      { word: "緑", color: "blue", key: "b", congruency: "incongruent" }
+    ];
+
+    // 5. 試行パーツの定義
+
+    // (a) 注視点 (500ms表示)
+    const fixation = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: '<div class="fixation-mark">+</div>',
+      choices: "NO_KEYS",
+      trial_duration: 500,
+      data: { task: 'fixation' }
+    };
+
+    // (b) 刺激提示
+    const stroop_stimulus_trial = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: function() {
+        const current_trial = jsPsych.timelineVariable('stimulus');
+        let colorCode = "#000000";
+        if (current_trial.color === "red") colorCode = "#FF0000";
+        if (current_trial.color === "blue") colorCode = "#0000FF";
+        if (current_trial.color === "green") colorCode = "#008000";
+
+        // line-heightなどで見切れを完全に防ぐ
+        return `<div class="stroop-stimulus" style="color: ${colorCode};">${current_trial.word}</div>`;
+      },
+      choices: ['r', 'b', 'g'], // 反応キー：'r', 'b', 'g'
+      // 刺激提示用の試行データを保存
+      data: function() {
+        const current_trial = jsPsych.timelineVariable('stimulus');
+        return {
+          task: 'response',
+          word: current_trial.word,
+          color: current_trial.color,
+          correct_response: current_trial.key,
+          congruency: current_trial.congruency
+        };
+      },
+      // 反応の正誤判定を追加
+      on_finish: function(data) {
+        data.correct = (jsPsych.pluginAPI.compareKeys(data.response, data.correct_response));
+      }
+    };
+
+    // (c) 試行間隔 (ITI: 1000ms 空白)
+    const iti = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: '',
+      choices: "NO_KEYS",
+      trial_duration: 1000,
+      data: { task: 'iti' }
+    };
+
+    // 6. メイン試行ループの生成 (10回繰り返す)
+    const test_procedure = {
+      timeline: [fixation, stroop_stimulus_trial, iti],
+      timeline_variables: stimuli_factors.map(item => ({ stimulus: item })),
+      sample: {
+        type: 'with-replacement', // 重複ありのランダムサンプリング
+        size: 10                  // 計10試行
+      }
+    };
+    timeline.push(test_procedure);
+
+    // 7. 実験の開始
+    jsPsych.run(timeline);
+  </script>
+</body>
+</html>
