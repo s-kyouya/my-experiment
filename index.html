@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>尚絅学院大学 心理学実験室</title>
+  
+  <!-- Google Fonts の読み込み（美しく読みやすいフォント） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome（アイコン用） -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* --- デザインシステム & 変数定義（目に優しいナチュラルカラーに再設計） --- */
+    :root {
+      --primary-color: #4a7c59;       /* 彩度を抑えた深みのあるセージグリーン */
+      --primary-light: #689f78;       /* 柔らかい新緑のようなグリーン */
+      --primary-bg: #ebf2ed;          /* 眩しさをカットしたごく淡いグリーン */
+      --accent-color: #c06c53;        /* 落ち着いたアーステラコッタ */
+      --bg-color: #f5efe6;            /* 液晶の強い光を和らげるサンドベージュ */
+      --card-bg: #fbf9f6;             /* 純白ではない、温かみのあるオフホワイト */
+      --text-main: #2f3e36;           /* 黒に近い、非常に柔らかいアッシュグリーン */
+      --text-muted: #5e6f65;          /* 補足用の穏やかなグリーングレー */
+      --border-color: #dbe3de;        /* 優しいアッシュグリーンの境界線 */
+      --font-base: 'Noto Sans JP', sans-serif;
+      --font-title: 'Kiwi Maru', serif; /* 温かみのある手書き風明朝体 */
+      --shadow-sm: 0 4px 6px rgba(47, 62, 54, 0.02);
+      --shadow-md: 0 10px 20px rgba(74, 124, 89, 0.05);
+      --shadow-lg: 0 20px 30px rgba(74, 124, 89, 0.1);
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    /* --- リセット & 基本設定 --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-base);
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* 装飾用の背景要素 */
+    .bg-decorator-1 {
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(104, 159, 120, 0.08) 0%, rgba(255,255,255,0) 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .bg-decorator-2 {
+      position: absolute;
+      bottom: 10%;
+      left: -150px;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(74, 124, 89, 0.05) 0%, rgba(255,255,255,0) 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* --- コンテナ --- */
+    .container {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* --- ヘッダー --- */
+    header {
+      padding: 60px 0 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .logo-area {
+      display: inline-block;
+      margin-bottom: 15px;
+      color: var(--primary-color);
+      font-size: 2.2rem;
+    }
+
+    h1 {
+      font-family: var(--font-title);
+      font-size: 2.2rem;
+      font-weight: 500;
+      color: var(--primary-color);
+      letter-spacing: 0.05em;
+      position: relative;
+      display: inline-block;
+      padding-bottom: 15px;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background-color: var(--primary-light);
+      border-radius: 2px;
+    }
+
+    /* --- メイン紹介文（ヒーローセクション） --- */
+    .intro-section {
+      background-color: var(--primary-bg);
+      border-radius: 24px;
+      padding: 35px 40px;
+      margin-bottom: 50px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .intro-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 100%;
+      background-color: var(--primary-color);
+    }
+
+    .intro-text {
+      font-size: 1.1rem;
+      color: var(--text-main);
+      text-align: justify;
+    }
+
+    .intro-highlights {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .highlight-tag {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--primary-color);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+    }
+
+    /* --- 実験リストタイトル --- */
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin-bottom: 30px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title i {
+      color: var(--primary-color);
+    }
+
+    /* --- 実験カードグリッド --- */
+    .experiment-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 30px;
+      margin-bottom: 60px;
+    }
+
+    /* --- カードスタイル --- */
+    .experiment-card {
+      background-color: var(--card-bg);
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-md);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ホバー時の洗練されたアニメーション */
+    .experiment-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary-light);
+    }
+
+    .card-body {
+      padding: 35px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+
+    .experiment-id {
+      font-family: var(--font-title);
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: var(--primary-light);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .time-badge {
+      background-color: #faf0ed;
+      color: var(--accent-color);
+      font-size: 0.8rem;
+      font-weight: bold;
+      padding: 4px 12px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid rgba(192, 108, 83, 0.15);
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 15px;
+    }
+
+    .card-description {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 30px;
+      flex-grow: 1;
+    }
+
+    /* --- ボタン（リンク） --- */
+    .btn-container {
+      margin-top: auto;
+    }
+
+    .btn-experiment {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background-color: var(--primary-color);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 1rem;
+      padding: 16px 24px;
+      border-radius: 14px;
+      transition: var(--transition);
+      box-shadow: 0 4px 12px rgba(74, 124, 89, 0.2);
+    }
+
+    .btn-experiment:hover {
+      background-color: var(--primary-light);
+      box-shadow: 0 6px 18px rgba(104, 159, 120, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-experiment i {
+      transition: var(--transition);
+    }
+
+    .btn-experiment:hover i {
+      transform: translateX(4px);
+    }
+
+    /* 実験0（記念室）のボタンは少しソフトな色合いに */
+    .experiment-card.archive .btn-experiment {
+      background-color: var(--text-muted);
+      box-shadow: 0 4px 12px rgba(94, 111, 101, 0.2);
+    }
+    
+    .experiment-card.archive .btn-experiment:hover {
+      background-color: var(--text-main);
+      box-shadow: 0 6px 18px rgba(47, 62, 54, 0.3);
+    }
+
+    .experiment-card.archive .experiment-id {
+      color: var(--text-muted);
+    }
+
+    /* --- フッター --- */
+    footer {
+      margin-top: auto;
+      padding: 40px 0;
+      background-color: var(--primary-bg);
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    .footer-content {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .footer-divider {
+      width: 40px;
+      height: 1px;
+      background-color: var(--primary-light);
+      margin: 15px auto;
+      opacity: 0.5;
+    }
+
+    /* --- レスポンシブ設計 --- */
+    @media (min-width: 768px) {
+      .experiment-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      
+      .intro-text {
+        font-size: 1.15rem;
+      }
+
+      header {
+        padding: 80px 0 50px;
+      }
+      
+      .card-body {
+        padding: 30px;
+      }
+      
+      .card-title {
+        font-size: 1.25rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      header {
+        padding: 40px 0 30px;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .intro-section {
+        padding: 25px 20px;
+        border-radius: 16px;
+      }
+
+      .card-body {
+        padding: 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 装飾用のグラデーションサークル -->
+  <div class="bg-decorator-1"></div>
+  <div class="bg-decorator-2"></div>
+
+  <header>
+    <div class="container">
+      <div class="logo-area">
+        <i class="fa-solid fa-seedling"></i>
+      </div>
+      <!-- 〇〇をお名前に変更してご使用ください -->
+      <h1>尚絅学院大学 心理学実験室</h1>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      
+      <!-- 挨拶・イントロダクション -->
+      <section class="intro-section">
+        <p class="intro-text">
+          ご訪問ありがとうございます。以下の実験へのご協力をお願いいたします。
+          各実験は簡単なタスクとなっており、数分で完了します。パソコンのほか、スマートフォンからもご参加いただけます。
+        </p>
+        <div class="intro-highlights">
+          <div class="highlight-tag">
+            <i class="fa-solid fa-clock"></i> 所要時間 約2〜3分
+          </div>
+          <div class="highlight-tag">
+            <i class="fa-solid fa-mobile-screen-button"></i> スマホ対応
+          </div>
+          <div class="highlight-tag">
+            <i class="fa-solid fa-user-shield"></i> 匿名回答・プライバシー保護
+          </div>
+        </div>
+      </section>
+
+      <!-- 実験一覧セクション -->
+      <section style="position: relative;">
+        <h2 class="section-title">
+          <i class="fa-solid fa-flask-fluid"></i> 実施中の実験・コンテンツ
+        </h2>
+
+        <div class="experiment-grid">
+          
+          <!-- 実験0：はじめてのWebページ -->
+          <article class="experiment-card archive">
+            <div class="card-body">
+              <div class="card-header-group">
+                <span class="experiment-id">Archive</span>
+                <span class="time-badge" style="color: var(--text-muted); background: #ebf0ed; border-color: #d1ddd6;">
+                  <i class="fa-solid fa-flag"></i> 第2回作成
+                </span>
+              </div>
+              <h3 class="card-title">実験0：はじめてのWebページ</h3>
+              <p class="card-description">
+                講義の第2回で作成した記念すべき「Hello World」のページです。すべてのWebデザインとプログラムの原点がここにあります。
+              </p>
+              <div class="btn-container">
+                <a href="hello_world.html" class="btn-experiment">
+                  <span>Hello Worldを見る</span>
+                  <i class="fa-solid fa-arrow-right"></i>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- 実験1：ストループ課題 -->
+          <article class="experiment-card">
+            <div class="card-body">
+              <div class="card-header-group">
+                <span class="experiment-id">Experiment 1</span>
+                <span class="time-badge">
+                  <i class="fa-solid fa-stopwatch"></i> 約3分
+                </span>
+              </div>
+              <h3 class="card-title">実験1：ストループ課題</h3>
+              <p class="card-description">
+                「文字の意味（例：赤）」と「実際に塗られている文字の色（例：青）」が一致しないときに生じる、脳の認識の干渉（ストループ効果）を測定するキーボードテストです。
+              </p>
+              <div class="btn-container">
+                <a href="stroop.html" class="btn-experiment">
+                  <span>実験1に参加する</span>
+                  <i class="fa-solid fa-play"></i>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- 実験2：ミュラー・リヤー錯視 -->
+          <article class="experiment-card">
+            <div class="card-body">
+              <div class="card-header-group">
+                <span class="experiment-id">Experiment 2</span>
+                <span class="time-badge">
+                  <i class="fa-solid fa-stopwatch"></i> 約2分
+                </span>
+              </div>
+              <h3 class="card-title">実験2：ミュラー・リヤー錯視</h3>
+              <p class="card-description">
+                矢印の向きによって、まったく同じ長さの線分が長く見えたり短く見えたりする有名な視覚錯覚を調べます。画面上のスライダーを直感的に操作して回答するテストです。
+              </p>
+              <div class="btn-container">
+                <a href="muller_lyer_final.html" class="btn-experiment">
+                  <span>実験2に参加する</span>
+                  <i class="fa-solid fa-play"></i>
+                </a>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <p>尚絅学院大学 心理学実験室</p>
+        <div class="footer-divider"></div>
+        <p>&copy; 2026 Shokei Gakuin University. All Rights Reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
