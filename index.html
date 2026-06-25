@@ -268,6 +268,9 @@
     /* --- ボタン（リンク） --- */
     .btn-container {
       margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .btn-experiment {
@@ -299,6 +302,58 @@
 
     .btn-experiment:hover i {
       transform: translateX(4px);
+    }
+
+    /* --- 事前登録（プレレジ）リンク用デザイン --- */
+    .prereg-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .btn-prereg {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background-color: transparent;
+      color: var(--primary-color);
+      border: 1.5px solid var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 11px 20px;
+      border-radius: 10px;
+      transition: var(--transition);
+    }
+
+    .btn-prereg:hover {
+      background-color: rgba(74, 124, 89, 0.06);
+      border-color: var(--primary-light);
+      color: var(--primary-light);
+    }
+
+    .btn-history {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 6px;
+      transition: var(--transition);
+    }
+
+    .btn-history:hover {
+      color: var(--accent-color);
+      text-decoration: underline;
     }
 
     /* 実験0（記念室）のボタンは少しソフトな色合いに */
@@ -485,12 +540,28 @@
               <p class="card-description">
                 矢印の向きによって、まったく同じ長さの線分が長く見えたり短く見えたりする有名な視覚錯覚を調べます。画面上のスライダーを直感的に操作して回答するテストです。
               </p>
+              
+              <!-- 実験2のボタンコンテナ：参加ボタンと透明性アピール用の事前登録（プレレジ）情報を綺麗に配置 -->
               <div class="btn-container">
                 <a href="muller_lyer_final.html" class="btn-experiment">
                   <span>実験2に参加する</span>
                   <i class="fa-solid fa-play"></i>
                 </a>
+                
+                <div class="prereg-group">
+                  <!-- プレレジを確認するボタン（白抜きアウトライン） -->
+                  <a href="https://github.com/s-kyouya/my-experiment/blob/main/preregistration.md" target="_blank" rel="noopener noreferrer" class="btn-prereg">
+                    <i class="fa-solid fa-file-contract"></i>
+                    <span>プレレジを確認する</span>
+                  </a>
+                  <!-- 変更履歴を確認するテキストリンク -->
+                  <a href="https://github.com/s-kyouya/my-experiment/commits/main/preregistration.md" target="_blank" rel="noopener noreferrer" class="btn-history">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>変更履歴（証拠）を確認する</span>
+                  </a>
+                </div>
               </div>
+              
             </div>
           </article>
 
